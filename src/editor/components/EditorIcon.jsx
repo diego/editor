@@ -1,17 +1,17 @@
-import headingIcon from '../icons/heading.svg';
-import textIcon from '../icons/text.svg';
-import imageIcon from '../icons/image.svg';
-import buttonIcon from '../icons/button.svg';
-import spacerIcon from '../icons/spacer.svg';
-import dividerIcon from '../icons/divider.svg';
-import groupIcon from '../icons/group.svg';
-import columnsIcon from '../icons/columns.svg';
-import columns3Icon from '../icons/columns3.svg';
-import designIcon from '../icons/design.svg';
-import desktopIcon from '../icons/desktop.svg';
-import mobileIcon from '../icons/mobile.svg';
-import resetIcon from '../icons/reset.svg';
-import deleteIcon from '../icons/delete.svg';
+import headingIcon from '../icons/heading.svg?raw';
+import textIcon from '../icons/text.svg?raw';
+import imageIcon from '../icons/image.svg?raw';
+import buttonIcon from '../icons/button.svg?raw';
+import spacerIcon from '../icons/spacer.svg?raw';
+import dividerIcon from '../icons/divider.svg?raw';
+import groupIcon from '../icons/group.svg?raw';
+import columnsIcon from '../icons/columns.svg?raw';
+import columns3Icon from '../icons/columns3.svg?raw';
+import designIcon from '../icons/design.svg?raw';
+import desktopIcon from '../icons/desktop.svg?raw';
+import mobileIcon from '../icons/mobile.svg?raw';
+import resetIcon from '../icons/reset.svg?raw';
+import deleteIcon from '../icons/delete.svg?raw';
 
 const ICONS = {
   heading: headingIcon,
@@ -31,9 +31,9 @@ const ICONS = {
 };
 
 export function EditorIcon({ name, className = '', size = 18 }) {
-  const src = ICONS[name];
+  const markup = ICONS[name];
 
-  if (!src) {
+  if (!markup) {
     return null;
   }
 
@@ -41,19 +41,12 @@ export function EditorIcon({ name, className = '', size = 18 }) {
     <span
       aria-hidden="true"
       className={className}
+      dangerouslySetInnerHTML={{ __html: markup }}
       style={{
         width: size,
         height: size,
         display: 'inline-block',
-        backgroundColor: 'currentColor',
-        maskImage: `url(${src})`,
-        WebkitMaskImage: `url(${src})`,
-        maskRepeat: 'no-repeat',
-        WebkitMaskRepeat: 'no-repeat',
-        maskPosition: 'center',
-        WebkitMaskPosition: 'center',
-        maskSize: 'contain',
-        WebkitMaskSize: 'contain',
+        lineHeight: 0,
         flex: '0 0 auto',
       }}
     />
