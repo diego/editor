@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   closestCenter,
   DndContext,
@@ -9,7 +9,9 @@ import {
 } from '@dnd-kit/core';
 import { EditorBlockLibrary } from './editor/components/EditorBlockLibrary';
 import { EditorCanvas } from './editor/components/EditorCanvas';
+import { EditorIcon } from './editor/components/EditorIcon';
 import { EditorInspector } from './editor/components/EditorInspector';
+import { BlockDragPreview } from './editor/components/canvas/BlockDragPreview';
 import { BLOCK_DEFINITIONS, getBlockDefinition, getInsertableBlocks } from './editor/blockRegistry';
 import {
   ROOT_CONTAINER_ID,
@@ -139,10 +141,10 @@ export default function App() {
     }
 
     if (dragData.kind === 'library') {
+      const block = createBlock(dragData.blockType);
       setActiveDrag({
         kind: 'library',
-        type: dragData.blockType,
-        label: getBlockDefinition(dragData.blockType)?.label || dragData.blockType,
+        block,
       });
       return;
     }
@@ -155,8 +157,7 @@ export default function App() {
 
       setActiveDrag({
         kind: 'block',
-        type: located.block.type,
-        label: getBlockDefinition(located.block.type)?.label || located.block.type,
+        block: located.block,
       });
     }
   }
@@ -215,6 +216,34 @@ export default function App() {
     setActiveDrag(null);
   }
 
+  useEffect(() => {
+    function handleKeyDown(event) {
+      const isDeleteKey = event.key === 'Delete' || event.key === 'Backspace';
+      if (!isDesignMode || !selectedBlockId || !isDeleteKey) {
+        return;
+      }
+
+      const target = event.target;
+      if (
+        target instanceof HTMLElement
+        && (
+          target.isContentEditable
+          || target.tagName === 'INPUT'
+          || target.tagName === 'TEXTAREA'
+          || target.tagName === 'SELECT'
+        )
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      handleDeleteSelected();
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDesignMode, selectedBlockId]);
+
   return (
     <section className="editor-shell">
       <header className="editor-shell__header">
@@ -228,11 +257,15 @@ export default function App() {
                 className={canvasMode === mode ? 'editor-shell__button editor-shell__button--active' : 'editor-shell__button'}
                 onClick={() => setCanvasMode(mode)}
               >
-                {mode[0].toUpperCase() + mode.slice(1)}
+                <EditorIcon name={mode} className="panel__button-icon" />
+                <span>{mode[0].toUpperCase() + mode.slice(1)}</span>
               </button>
             ))}
           </div>
-          <button type="button" className="editor-shell__button" onClick={handleReset}>Reset</button>
+          <button type="button" className="editor-shell__button" onClick={handleReset}>
+            <EditorIcon name="reset" className="panel__button-icon" />
+            <span>Reset</span>
+          </button>
         </div>
       </header>
 
@@ -257,6 +290,7 @@ export default function App() {
             onSelectBlock={handleSelectBlock}
             onPatchBlock={handlePatchBlock}
             mode={canvasMode}
+            showDropZones={isDesignMode && Boolean(activeDrag)}
           />
 
           <div className={`editor-shell__panel-slot${isDesignMode ? '' : ' editor-shell__panel-slot--hidden'}`}>
@@ -270,10 +304,16 @@ export default function App() {
         </main>
 
         <DragOverlay>
-          {isDesignMode && activeDrag ? (
-            <div className="editor-shell__drag-overlay">
-              <span>{activeDrag.label}</span>
+          {isDesignMode && activeDrag?.kind === 'library' ? (
+            <div className="editor-shell__drag-chip">
+              <span>{getBlockDefinition(activeDrag.block.type)?.label || activeDrag.block.type}</span>
             </div>
+          ) : null}
+          {isDesignMode && activeDrag?.kind === 'block' ? (
+            <BlockDragPreview
+              block={activeDrag.block}
+              preview="desktop"
+            />
           ) : null}
         </DragOverlay>
       </DndContext>

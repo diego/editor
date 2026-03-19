@@ -1,19 +1,19 @@
-import {
-  BORDER_SCALE,
-  FONT_SIZE_SCALE,
-  GAP_SCALE,
-  LINE_HEIGHT_SCALE,
-  RADIUS_SCALE,
-  SIZE_OPTIONS,
-  SPACE_SCALE,
-  WIDTH_SCALE,
-} from './designTokens';
-
 const ALIGN_OPTIONS = ['left', 'center', 'right'];
 const WEIGHT_OPTIONS = ['normal', 'medium', 'bold'];
 const WIDTH_OPTIONS = ['xs', 'sm', 'md', 'lg', 'xl', 'full'];
 const VERTICAL_ALIGN_OPTIONS = ['top', 'middle', 'bottom', 'stretch'];
 const BUTTON_WIDTH_OPTIONS = ['auto', 'full'];
+const BUTTON_JUSTIFY_OPTIONS = [
+  { value: 'flex-start', label: 'left' },
+  { value: 'center', label: 'center' },
+  { value: 'flex-end', label: 'right' },
+];
+const TARGET_OPTIONS = [
+  { value: '_self', label: 'Same tab' },
+  { value: '_blank', label: 'New tab' },
+];
+const STACK_OPTIONS = ['yes', 'no'];
+const SIZE_OPTIONS = ['none', 'xs', 'sm', 'md', 'lg', 'xl'];
 
 function sizeControl(label) {
   return {
@@ -23,205 +23,318 @@ function sizeControl(label) {
   };
 }
 
-function baseSpacingControls() {
-  return [
-    { name: 'marginTop', ...sizeControl('Top spacing') },
-    { name: 'marginBottom', ...sizeControl('Bottom spacing') },
-  ];
+function defineBlock({
+  type,
+  label,
+  category,
+  supportsChildren = false,
+  allowedChildren,
+  insertable = true,
+  createChildren,
+  propGroups = {},
+}) {
+  const controlGroups = ['content', 'style', 'behavior'].map((groupName) => {
+    const group = propGroups[groupName] || {};
+    return {
+      name: groupName,
+      label: group.label || groupName[0].toUpperCase() + groupName.slice(1),
+      controls: group.controls || [],
+    };
+  });
+
+  const defaultProps = controlGroups.reduce((result, group) => ({
+    ...result,
+    ...(propGroups[group.name]?.defaultProps || {}),
+  }), {});
+
+  return {
+    type,
+    label,
+    category,
+    supportsChildren,
+    allowedChildren,
+    insertable,
+    createChildren,
+    defaultProps,
+    controlGroups,
+    controls: controlGroups.flatMap((group) => group.controls),
+  };
 }
 
 export const BLOCK_DEFINITIONS = {
-  heading: {
+  heading: defineBlock({
     type: 'heading',
     label: 'Heading',
     category: 'Content',
-    defaultProps: {
-      content: 'Email headline',
-      align: 'left',
-      color: '#201c1b',
-      fontSize: 'xl',
-      fontWeight: 'bold',
+    propGroups: {
+      content: {
+        defaultProps: {
+          content: 'Email headline',
+        },
+        controls: [
+          { name: 'content', type: 'textarea', label: 'Content' },
+        ],
+      },
+      style: {
+        defaultProps: {
+          textAlign: 'left',
+          color: '#201c1b',
+          fontSize: 'xl',
+          fontWeight: 'bold',
+        },
+        controls: [
+          { name: 'textAlign', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
+          { name: 'fontSize', ...sizeControl('Font size') },
+          { name: 'fontWeight', type: 'select', label: 'Weight', options: WEIGHT_OPTIONS },
+          { name: 'color', type: 'color', label: 'Color' },
+          { name: 'marginTop', ...sizeControl('Top spacing') },
+          { name: 'marginBottom', ...sizeControl('Bottom spacing') },
+        ],
+      },
     },
-    supportsChildren: false,
-    controls: [
-      { name: 'content', type: 'textarea', label: 'Content' },
-      { name: 'align', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
-      { name: 'fontSize', ...sizeControl('Font size') },
-      { name: 'fontWeight', type: 'select', label: 'Weight', options: WEIGHT_OPTIONS },
-      { name: 'color', type: 'color', label: 'Color' },
-      ...baseSpacingControls(),
-    ],
-  },
-  text: {
+  }),
+  text: defineBlock({
     type: 'text',
     label: 'Text',
     category: 'Content',
-    defaultProps: {
-      content: 'Write your email copy here.',
-      align: 'left',
-      color: '#4f4a47',
-      fontSize: 'md',
-      lineHeight: 'md',
+    propGroups: {
+      content: {
+        defaultProps: {
+          content: 'Write your email copy here.',
+        },
+        controls: [
+          { name: 'content', type: 'textarea', label: 'Content' },
+        ],
+      },
+      style: {
+        defaultProps: {
+          textAlign: 'left',
+          color: '#4f4a47',
+          fontSize: 'md',
+          lineHeight: 'md',
+        },
+        controls: [
+          { name: 'textAlign', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
+          { name: 'fontSize', ...sizeControl('Font size') },
+          { name: 'lineHeight', ...sizeControl('Line height') },
+          { name: 'color', type: 'color', label: 'Color' },
+          { name: 'marginTop', ...sizeControl('Top spacing') },
+          { name: 'marginBottom', ...sizeControl('Bottom spacing') },
+        ],
+      },
     },
-    supportsChildren: false,
-    controls: [
-      { name: 'content', type: 'textarea', label: 'Content' },
-      { name: 'align', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
-      { name: 'fontSize', ...sizeControl('Font size') },
-      { name: 'lineHeight', ...sizeControl('Line height') },
-      { name: 'color', type: 'color', label: 'Color' },
-      ...baseSpacingControls(),
-    ],
-  },
-  image: {
+  }),
+  image: defineBlock({
     type: 'image',
     label: 'Image',
     category: 'Media',
-    defaultProps: {
-      src: 'https://placehold.co/640x320/f4efe8/201c1b?text=Image',
-      alt: 'Email image',
-      align: 'center',
-      width: 'xl',
-      radius: 'sm',
+    propGroups: {
+      content: {
+        defaultProps: {
+          src: 'https://placehold.co/640x320/f4efe8/201c1b?text=Image',
+          alt: 'Email image',
+        },
+        controls: [
+          { name: 'src', type: 'url', label: 'Source URL' },
+          { name: 'alt', type: 'text', label: 'Alt text' },
+        ],
+      },
+      style: {
+        defaultProps: {
+          textAlign: 'center',
+          width: 'xl',
+          borderRadius: 'sm',
+        },
+        controls: [
+          { name: 'textAlign', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
+          { name: 'width', type: 'select', label: 'Width', options: WIDTH_OPTIONS },
+          { name: 'borderRadius', ...sizeControl('Corner radius') },
+          { name: 'marginTop', ...sizeControl('Top spacing') },
+          { name: 'marginBottom', ...sizeControl('Bottom spacing') },
+        ],
+      },
     },
-    supportsChildren: false,
-    controls: [
-      { name: 'src', type: 'url', label: 'Source URL' },
-      { name: 'alt', type: 'text', label: 'Alt text' },
-      { name: 'align', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
-      { name: 'width', type: 'select', label: 'Width', options: WIDTH_OPTIONS },
-      { name: 'radius', ...sizeControl('Corner radius') },
-      ...baseSpacingControls(),
-    ],
-  },
-  button: {
+  }),
+  button: defineBlock({
     type: 'button',
     label: 'Button',
     category: 'Actions',
-    defaultProps: {
-      label: 'Call to action',
-      href: 'https://example.com',
-      align: 'left',
-      width: 'auto',
-      background: '#201c1b',
-      textColor: '#fffaf5',
-      paddingX: 'lg',
-      paddingY: 'sm',
-      radius: 'md',
+    propGroups: {
+      content: {
+        defaultProps: {
+          label: 'Call to action',
+          href: 'https://example.com',
+          target: '_blank',
+        },
+        controls: [
+          { name: 'label', type: 'text', label: 'Label' },
+          { name: 'href', type: 'url', label: 'Link URL' },
+        ],
+      },
+      style: {
+        defaultProps: {
+          justifyContent: 'flex-start',
+          width: 'auto',
+          backgroundColor: '#201c1b',
+          color: '#fffaf5',
+          paddingInline: 'lg',
+          paddingBlock: 'sm',
+          borderRadius: 'md',
+        },
+        controls: [
+          { name: 'justifyContent', type: 'segmented', label: 'Alignment', options: BUTTON_JUSTIFY_OPTIONS },
+          { name: 'width', type: 'select', label: 'Width', options: BUTTON_WIDTH_OPTIONS },
+          { name: 'backgroundColor', type: 'color', label: 'Background color' },
+          { name: 'color', type: 'color', label: 'Text color' },
+          { name: 'paddingInline', ...sizeControl('Horizontal padding') },
+          { name: 'paddingBlock', ...sizeControl('Vertical padding') },
+          { name: 'borderRadius', ...sizeControl('Corner radius') },
+          { name: 'marginTop', ...sizeControl('Top spacing') },
+          { name: 'marginBottom', ...sizeControl('Bottom spacing') },
+        ],
+      },
+      behavior: {
+        controls: [
+          { name: 'target', type: 'select', label: 'Open link in', options: TARGET_OPTIONS },
+        ],
+      },
     },
-    supportsChildren: false,
-    controls: [
-      { name: 'label', type: 'text', label: 'Label' },
-      { name: 'href', type: 'url', label: 'Link URL' },
-      { name: 'align', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
-      { name: 'width', type: 'select', label: 'Width', options: BUTTON_WIDTH_OPTIONS },
-      { name: 'background', type: 'color', label: 'Background' },
-      { name: 'textColor', type: 'color', label: 'Text color' },
-      { name: 'paddingX', ...sizeControl('Horizontal padding') },
-      { name: 'paddingY', ...sizeControl('Vertical padding') },
-      { name: 'radius', ...sizeControl('Corner radius') },
-      ...baseSpacingControls(),
-    ],
-  },
-  spacer: {
+  }),
+  spacer: defineBlock({
     type: 'spacer',
     label: 'Spacer',
     category: 'Layout',
-    defaultProps: {
-      height: 'lg',
+    propGroups: {
+      style: {
+        defaultProps: {
+          height: 'lg',
+        },
+        controls: [
+          { name: 'height', ...sizeControl('Height') },
+        ],
+      },
     },
-    supportsChildren: false,
-    controls: [
-      { name: 'height', ...sizeControl('Height') },
-    ],
-  },
-  divider: {
+  }),
+  divider: defineBlock({
     type: 'divider',
     label: 'Divider',
     category: 'Layout',
-    defaultProps: {
-      color: '#d9d2c7',
-      thickness: 'xs',
+    propGroups: {
+      style: {
+        defaultProps: {
+          color: '#d9d2c7',
+          borderWidth: 'xs',
+        },
+        controls: [
+          { name: 'color', type: 'color', label: 'Line color' },
+          { name: 'borderWidth', ...sizeControl('Thickness') },
+          { name: 'marginTop', ...sizeControl('Top spacing') },
+          { name: 'marginBottom', ...sizeControl('Bottom spacing') },
+        ],
+      },
     },
-    supportsChildren: false,
-    controls: [
-      { name: 'color', type: 'color', label: 'Line color' },
-      { name: 'thickness', ...sizeControl('Thickness') },
-      ...baseSpacingControls(),
-    ],
-  },
-  group: {
+  }),
+  group: defineBlock({
     type: 'group',
     label: 'Group',
     category: 'Layout',
-    defaultProps: {
-      radius: 'md',
-    },
     supportsChildren: true,
-    controls: [
-      { name: 'background', type: 'color', label: 'Background' },
-      { name: 'padding', ...sizeControl('Padding') },
-      { name: 'gap', ...sizeControl('Inner gap') },
-      { name: 'radius', ...sizeControl('Corner radius') },
-      ...baseSpacingControls(),
-    ],
-  },
-  columns: {
+    propGroups: {
+      style: {
+        defaultProps: {
+          backgroundColor: '',
+          padding: 'none',
+          gap: 'none',
+          borderRadius: 'md',
+          marginTop: 'none',
+          marginBottom: 'none',
+        },
+        controls: [
+          { name: 'backgroundColor', type: 'color', label: 'Background color' },
+          { name: 'padding', ...sizeControl('Padding') },
+          { name: 'gap', ...sizeControl('Inner gap') },
+          { name: 'borderRadius', ...sizeControl('Corner radius') },
+          { name: 'marginTop', ...sizeControl('Top spacing') },
+          { name: 'marginBottom', ...sizeControl('Bottom spacing') },
+        ],
+      },
+    },
+  }),
+  columns: defineBlock({
     type: 'columns',
     label: '2 Columns',
     category: 'Layout',
-    defaultProps: {
-      background: '',
-      stackOnMobile: 'yes',
-      verticalAlign: 'top',
-    },
     supportsChildren: true,
     allowedChildren: ['column'],
-    createChildren: () => [
-      { type: 'column' },
-      { type: 'column' },
-    ],
-    controls: [
-      { name: 'background', type: 'color', label: 'Background' },
-      { name: 'gap', ...sizeControl('Column gap') },
-      { name: 'verticalAlign', type: 'select', label: 'Vertical align', options: VERTICAL_ALIGN_OPTIONS },
-      { name: 'stackOnMobile', type: 'select', label: 'Stack on mobile', options: ['yes', 'no'] },
-      ...baseSpacingControls(),
-    ],
-  },
-  columns3: {
+    createChildren: () => [{ type: 'column' }, { type: 'column' }],
+    propGroups: {
+      style: {
+        defaultProps: {
+          backgroundColor: '',
+          gap: 'none',
+          marginTop: 'none',
+          marginBottom: 'none',
+        },
+        controls: [
+          { name: 'backgroundColor', type: 'color', label: 'Background color' },
+          { name: 'gap', ...sizeControl('Column gap') },
+          { name: 'marginTop', ...sizeControl('Top spacing') },
+          { name: 'marginBottom', ...sizeControl('Bottom spacing') },
+        ],
+      },
+      behavior: {
+        defaultProps: {
+          verticalAlign: 'top',
+          stackOnMobile: 'yes',
+        },
+        controls: [
+          { name: 'verticalAlign', type: 'select', label: 'Vertical align', options: VERTICAL_ALIGN_OPTIONS },
+          { name: 'stackOnMobile', type: 'select', label: 'Stack on mobile', options: STACK_OPTIONS },
+        ],
+      },
+    },
+  }),
+  columns3: defineBlock({
     type: 'columns3',
     label: '3 Columns',
     category: 'Layout',
-    defaultProps: {
-      background: '',
-      stackOnMobile: 'yes',
-      verticalAlign: 'top',
-    },
     supportsChildren: true,
     allowedChildren: ['column'],
-    createChildren: () => [
-      { type: 'column' },
-      { type: 'column' },
-      { type: 'column' },
-    ],
-    controls: [
-      { name: 'background', type: 'color', label: 'Background' },
-      { name: 'gap', ...sizeControl('Column gap') },
-      { name: 'verticalAlign', type: 'select', label: 'Vertical align', options: VERTICAL_ALIGN_OPTIONS },
-      { name: 'stackOnMobile', type: 'select', label: 'Stack on mobile', options: ['yes', 'no'] },
-      ...baseSpacingControls(),
-    ],
-  },
-  column: {
+    createChildren: () => [{ type: 'column' }, { type: 'column' }, { type: 'column' }],
+    propGroups: {
+      style: {
+        defaultProps: {
+          backgroundColor: '',
+          gap: 'none',
+          marginTop: 'none',
+          marginBottom: 'none',
+        },
+        controls: [
+          { name: 'backgroundColor', type: 'color', label: 'Background color' },
+          { name: 'gap', ...sizeControl('Column gap') },
+          { name: 'marginTop', ...sizeControl('Top spacing') },
+          { name: 'marginBottom', ...sizeControl('Bottom spacing') },
+        ],
+      },
+      behavior: {
+        defaultProps: {
+          verticalAlign: 'top',
+          stackOnMobile: 'yes',
+        },
+        controls: [
+          { name: 'verticalAlign', type: 'select', label: 'Vertical align', options: VERTICAL_ALIGN_OPTIONS },
+          { name: 'stackOnMobile', type: 'select', label: 'Stack on mobile', options: STACK_OPTIONS },
+        ],
+      },
+    },
+  }),
+  column: defineBlock({
     type: 'column',
     label: 'Column',
     category: 'Layout',
     insertable: false,
-    defaultProps: {},
     supportsChildren: true,
-    controls: [],
-  },
+  }),
 };
 
 export function getBlockDefinition(type) {
@@ -234,20 +347,6 @@ export function getInsertableBlocks() {
     .sort((left, right) => left.category.localeCompare(right.category) || left.label.localeCompare(right.label));
 }
 
-export function getBlockStyleTokens(props = {}) {
-  return {
-    marginTop: SPACE_SCALE[props.marginTop] || '0px',
-    marginBottom: SPACE_SCALE[props.marginBottom] || '0px',
-    padding: SPACE_SCALE[props.padding] || '0px',
-    height: SPACE_SCALE[props.height] || SPACE_SCALE.md,
-    gap: GAP_SCALE[props.gap] || '0px',
-    radius: RADIUS_SCALE[props.radius] || '0px',
-    fontSize: FONT_SIZE_SCALE[props.fontSize] || FONT_SIZE_SCALE.md,
-    lineHeight: LINE_HEIGHT_SCALE[props.lineHeight] || LINE_HEIGHT_SCALE.md,
-    width: WIDTH_SCALE[props.width] || WIDTH_SCALE.full,
-    contentWidth: WIDTH_SCALE[props.contentWidth] || WIDTH_SCALE.full,
-    paddingX: SPACE_SCALE[props.paddingX] || SPACE_SCALE.md,
-    paddingY: SPACE_SCALE[props.paddingY] || SPACE_SCALE.sm,
-    borderWidth: BORDER_SCALE[props.borderWidth || props.thickness] || BORDER_SCALE.xs,
-  };
+export function getBlockControls(definition) {
+  return definition?.controls || [];
 }

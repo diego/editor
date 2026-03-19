@@ -1,4 +1,17 @@
 import { SIZE_LABELS } from '../designTokens';
+import { EditorIcon } from './EditorIcon';
+
+function getOptionValue(option) {
+  return typeof option === 'string' ? option : option.value;
+}
+
+function getOptionLabel(option) {
+  if (typeof option === 'string') {
+    return SIZE_LABELS[option] || option;
+  }
+
+  return option.label;
+}
 
 function InspectorField({ control, value, onChange }) {
   const id = `inspector-${control.name}`;
@@ -10,12 +23,12 @@ function InspectorField({ control, value, onChange }) {
         <div className="panel__segmented-control">
           {control.options.map((option) => (
             <button
-              key={option}
+              key={getOptionValue(option)}
               type="button"
-              className={value === option ? 'panel__segmented-control-button panel__segmented-control-button--active' : 'panel__segmented-control-button'}
-              onClick={() => onChange(control.name, option)}
+              className={value === getOptionValue(option) ? 'panel__segmented-control-button panel__segmented-control-button--active' : 'panel__segmented-control-button'}
+              onClick={() => onChange(control.name, getOptionValue(option))}
             >
-              {option}
+              {getOptionLabel(option)}
             </button>
           ))}
         </div>
@@ -29,8 +42,8 @@ function InspectorField({ control, value, onChange }) {
         <label htmlFor={id}>{control.label}</label>
         <select id={id} value={value ?? ''} onChange={(event) => onChange(control.name, event.target.value)}>
           {control.options.map((option) => (
-            <option key={option} value={option}>
-              {SIZE_LABELS[option] || option}
+            <option key={getOptionValue(option)} value={getOptionValue(option)}>
+              {getOptionLabel(option)}
             </option>
           ))}
         </select>
@@ -61,6 +74,8 @@ function InspectorField({ control, value, onChange }) {
 }
 
 export function EditorInspector({ block, definition, onChange, onDelete }) {
+  const controlGroups = definition?.controlGroups?.filter((group) => group.controls.length) || [];
+
   return (
     <aside className="panel panel--inspector">
       {!block || !definition ? (
@@ -74,23 +89,33 @@ export function EditorInspector({ block, definition, onChange, onDelete }) {
             <h3>{definition.label}</h3>
           </div>
 
-          <div className="panel__inspector-actions">
-            <button type="button" className="panel__button panel__button--danger" onClick={onDelete}>Delete</button>
-          </div>
-
           <div className="panel__inspector-fields">
-            {definition.controls.length ? (
-              definition.controls.map((control) => (
-                <InspectorField
-                  key={control.name}
-                  control={control}
-                  value={block.props?.[control.name]}
-                  onChange={onChange}
-                />
+            {controlGroups.length ? (
+              controlGroups.map((group) => (
+                <section key={group.name} className="panel__inspector-group">
+                  <h4 className="panel__inspector-group-title">{group.label}</h4>
+                  <div className="panel__inspector-group-fields">
+                    {group.controls.map((control) => (
+                      <InspectorField
+                        key={control.name}
+                        control={control}
+                        value={block.props?.[control.name]}
+                        onChange={onChange}
+                      />
+                    ))}
+                  </div>
+                </section>
               ))
             ) : (
               <p className="panel__inspector-note">This structural block has no direct editable properties.</p>
             )}
+          </div>
+
+          <div className="panel__inspector-actions">
+            <button type="button" className="panel__button panel__button--danger" onClick={onDelete}>
+              <EditorIcon name="delete" className="panel__button-icon" />
+              <span>Delete</span>
+            </button>
           </div>
         </div>
       )}

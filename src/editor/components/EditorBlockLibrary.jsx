@@ -1,4 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
+import { EditorIcon } from './EditorIcon';
 
 function DraggableLibraryItem({ block, onInsert }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -14,11 +15,15 @@ function DraggableLibraryItem({ block, onInsert }) {
       ref={setNodeRef}
       type="button"
       className={`panel__library-item${isDragging ? ' panel__library-item--dragging' : ''}`}
+      data-testid={`library-block-${block.type}`}
       onClick={() => onInsert(block.type)}
       {...listeners}
       {...attributes}
     >
-      <span className="panel__library-item-label">{block.label}</span>
+      <span className="panel__library-item-main">
+        <EditorIcon name={block.type} className="panel__library-item-icon" />
+        <span className="panel__library-item-label">{block.label}</span>
+      </span>
       <span className="panel__library-item-meta">{block.type}</span>
     </button>
   );

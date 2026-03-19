@@ -171,9 +171,5 @@ export function getDropTargetFromOver(over) {
     return { containerId: data.containerId, index: data.index };
   }
 
-  if (data.kind === 'block') {
-    return { containerId: data.containerId, index: data.index };
-  }
-
   return null;
 }
