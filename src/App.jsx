@@ -76,6 +76,7 @@ export default function App() {
   const [documentState, setDocumentState] = useState(createInitialDocument);
   const [selectedBlockId, setSelectedBlockId] = useState('');
   const [activeDrag, setActiveDrag] = useState(null);
+  const [dropIndicator, setDropIndicator] = useState(null);
   const [canvasMode, setCanvasMode] = useState('design');
 
   const sensors = useSensors(
@@ -142,6 +143,7 @@ export default function App() {
 
     if (dragData.kind === 'library') {
       const block = createBlock(dragData.blockType);
+      setDropIndicator(null);
       setActiveDrag({
         kind: 'library',
         block,
@@ -155,6 +157,7 @@ export default function App() {
         return;
       }
 
+      setDropIndicator(null);
       setActiveDrag({
         kind: 'block',
         block: located.block,
@@ -162,15 +165,92 @@ export default function App() {
     }
   }
 
+  function resolveDropIntent(event) {
+    const dragData = event.active?.data.current;
+    const overData = event.over?.data.current;
+    if (!dragData || !overData) {
+      return null;
+    }
+
+    const movingType = dragData.kind === 'library'
+      ? dragData.blockType
+      : findBlock(documentState, dragData.blockId)?.block.type;
+
+    if (!movingType) {
+      return null;
+    }
+
+    const canDropIntoContainer = (containerId) => {
+      if (containerId === ROOT_CONTAINER_ID) {
+        return true;
+      }
+
+      const container = findBlock(documentState, containerId)?.block;
+      return Boolean(container && canAcceptChild(container.type, movingType));
+    };
+
+    if (overData.kind === 'block-target') {
+      if (!canDropIntoContainer(overData.containerId)) {
+        return null;
+      }
+
+      const activeRect = event.active.rect.current.translated || event.active.rect.current.initial;
+      const overRect = event.over?.rect;
+      if (!activeRect || !overRect) {
+        return null;
+      }
+
+      const activeMidY = activeRect.top + (activeRect.height / 2);
+      const overMidY = overRect.top + (overRect.height / 2);
+      const placement = activeMidY < overMidY ? 'before' : 'after';
+      const index = placement === 'before' ? overData.index : overData.index + 1;
+
+      return {
+        containerId: overData.containerId,
+        index,
+        source: 'block-target',
+      };
+    }
+
+    if (overData.kind === 'container' && canDropIntoContainer(overData.containerId)) {
+      return {
+        containerId: overData.containerId,
+        index: overData.index,
+        source: overData.source || 'container',
+      };
+    }
+
+    return null;
+  }
+
+  function handleDragOver(event) {
+    if (!isDesignMode) {
+      return;
+    }
+
+    const intent = resolveDropIntent(event);
+    if (!intent || intent.source === 'drop-zone') {
+      setDropIndicator(null);
+      return;
+    }
+
+    setDropIndicator({
+      containerId: intent.containerId,
+      index: intent.index,
+    });
+  }
+
   function handleDragEnd(event) {
     if (!isDesignMode) {
       setActiveDrag(null);
+      setDropIndicator(null);
       return;
     }
 
     const dragData = event.active.data.current;
-    const dropData = getDropTargetFromOver(event.over);
+    const dropData = resolveDropIntent(event) || getDropTargetFromOver(event.over);
     setActiveDrag(null);
+    setDropIndicator(null);
 
     if (!dragData || !dropData) {
       return;
@@ -214,6 +294,7 @@ export default function App() {
 
   function handleDragCancel() {
     setActiveDrag(null);
+    setDropIndicator(null);
   }
 
   useEffect(() => {
@@ -273,6 +354,7 @@ export default function App() {
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
@@ -291,6 +373,7 @@ export default function App() {
             onPatchBlock={handlePatchBlock}
             mode={canvasMode}
             showDropZones={isDesignMode && Boolean(activeDrag)}
+            dropIndicator={dropIndicator}
           />
 
           <div className={`editor-shell__panel-slot${isDesignMode ? '' : ' editor-shell__panel-slot--hidden'}`}>

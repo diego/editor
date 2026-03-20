@@ -60,7 +60,7 @@ test('selected block can be reordered with drag and drop', async ({ page }) => {
   const textBlock = page.getByTestId('block-container-text');
 
   await headingBlock.click();
-  await dragBetween(page, headingBlock, page.getByTestId('drop-zone-insertion-root-2'));
+  await dragBetween(page, headingBlock, textBlock);
 
   const blocks = page.getByTestId('editor-canvas').locator('[data-testid^="block-container-"]');
   await expect(blocks.nth(0)).toHaveAttribute('data-testid', 'block-container-text');

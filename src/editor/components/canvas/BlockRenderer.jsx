@@ -6,8 +6,8 @@ import { BlockDropZone } from './BlockDropZone';
 
 const LEAF_BLOCK_TYPES = new Set(['heading', 'text', 'image', 'button', 'spacer', 'divider']);
 
-function ChildDropContainer({ block, blocks, isDesignMode, label, renderBlockList, showDropZones, gap }) {
-  const showInnerDropArea = isDesignMode && (!blocks.length || showDropZones);
+function ChildDropContainer({ block, blocks, isDesignMode, label, renderBlockList, gap }) {
+  const showInnerDropArea = isDesignMode && !blocks.length;
 
   return (
     <div className="block-canvas__child-container">
@@ -18,7 +18,6 @@ function ChildDropContainer({ block, blocks, isDesignMode, label, renderBlockLis
           index={block.children?.length || 0}
           label={label}
           disabled={!isDesignMode}
-          hasContent={blocks.length > 0}
           role="inner"
         />
       ) : null}
@@ -26,7 +25,7 @@ function ChildDropContainer({ block, blocks, isDesignMode, label, renderBlockLis
   );
 }
 
-function ColumnDropArea({ column, isDesignMode, renderBlockList, showDropZones }) {
+function ColumnDropArea({ column, isDesignMode, renderBlockList }) {
   return (
     <div className="block-canvas__column">
       <ChildDropContainer
@@ -35,13 +34,12 @@ function ColumnDropArea({ column, isDesignMode, renderBlockList, showDropZones }
         isDesignMode={isDesignMode}
         label="Drop block here"
         renderBlockList={renderBlockList}
-        showDropZones={showDropZones}
       />
     </div>
   );
 }
 
-export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSelectBlock, renderBlockList, showDropZones = false }) {
+export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSelectBlock, renderBlockList }) {
   const tokens = getBlockStyleTokens(block.props);
   const definition = getBlockDefinition(block.type);
   const blockProps = block.props;
@@ -189,7 +187,6 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
             isDesignMode={isDesignMode}
             label="Drop block here"
             renderBlockList={renderBlockList}
-            showDropZones={showDropZones}
             gap={tokens.gap}
           />
         </div>
@@ -214,7 +211,6 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
             column={column}
             isDesignMode={isDesignMode}
             renderBlockList={renderBlockList}
-            showDropZones={showDropZones}
           />
         ))}
       </div>
@@ -229,7 +225,6 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
         isDesignMode={isDesignMode}
         label="Drop block here"
         renderBlockList={renderBlockList}
-        showDropZones={showDropZones}
       />
     );
   }

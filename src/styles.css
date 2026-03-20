@@ -202,8 +202,13 @@ button {
 }
 
 .block-canvas__list {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  display: grid;
+}
+
+.block-canvas__block-slot {
+  position: relative;
+  display: grid;
 }
 
 .block-canvas__list--design {
@@ -211,7 +216,7 @@ button {
 }
 
 .block-canvas__list--preview {
-  gap: var(--block-list-gap, 0px);
+  gap: 0;
 }
 
 .block-canvas__container-header {
@@ -424,14 +429,6 @@ button {
   background: rgba(255, 255, 255, 0.84);
 }
 
-.block-canvas__drop-zone--separated {
-  margin: 18px 0;
-}
-
-.block-canvas__drop-zone--with-content:not(.block-canvas__drop-zone--separated) {
-  margin-top: 12px;
-}
-
 .block-canvas__drop-zone:hover {
   box-shadow: inset 0 0 0 1px #000000;
 }
@@ -439,6 +436,81 @@ button {
 .block-canvas__drop-zone--over {
   border-color: #201c1b;
   color: #201c1b;
+}
+
+.block-canvas__list-marker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.block-canvas__insertion-marker {
+  position: relative;
+  height: 0;
+  pointer-events: none;
+}
+
+.block-canvas__insertion-marker::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #201c1b;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(32, 28, 27, 0.04);
+  transform: translateY(-50%);
+}
+
+.block-canvas__insertion-marker::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: #201c1b;
+  border-radius: 999px;
+  transform: translate(-2px, -50%);
+}
+
+.block-canvas__block-hit-area {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--block-list-gap, 18px) * -0.5);
+  bottom: calc(var(--block-list-gap, 18px) * -0.5);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.block-canvas__block-hit-area--active {
+  pointer-events: auto;
+}
+
+.block-canvas__block-slot > .block-canvas__container {
+  position: relative;
+  z-index: 2;
+}
+
+.block-canvas__list-edge-target {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: calc((var(--block-list-gap, 18px) * 0.5) + 10px);
+  z-index: 1;
+}
+
+.block-canvas__list-edge-target--top {
+  top: calc((var(--block-list-gap, 18px) * -0.5) - 10px);
+}
+
+.block-canvas__list-edge-target--bottom {
+  bottom: calc((var(--block-list-gap, 18px) * -0.5) - 10px);
 }
 
 .block-canvas__root {
