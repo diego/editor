@@ -24,7 +24,6 @@ function DraggableLibraryItem({ block, onInsert }) {
         <EditorIcon name={block.type} className="panel__library-item-icon" />
         <span className="panel__library-item-label">{block.label}</span>
       </span>
-      <span className="panel__library-item-meta">{block.type}</span>
     </button>
   );
 }

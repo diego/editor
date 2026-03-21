@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   closestCenter,
   DndContext,
@@ -13,6 +13,15 @@ import { EditorIcon } from './editor/components/EditorIcon';
 import { EditorInspector } from './editor/components/EditorInspector';
 import { BlockDragPreview } from './editor/components/canvas/BlockDragPreview';
 import { BLOCK_DEFINITIONS, getBlockDefinition, getInsertableBlocks } from './editor/blockRegistry';
+import { parseEditorDocument, serializeEditorDocument } from './editor/documentPayload';
+import { exportDocumentToHtml } from './editor/exportHtml';
+import {
+  createHostSession,
+  getInitMessagePayload,
+  hasHostOpener,
+  postEditorReady,
+  postEditorSave,
+} from './editor/hostBridge';
 import {
   ROOT_CONTAINER_ID,
   canAcceptChild,
@@ -30,7 +39,25 @@ import {
 } from './editor/blockUtils';
 
 const INSERTABLE_BLOCKS = getInsertableBlocks();
-const CANVAS_MODES = ['design', 'desktop', 'mobile'];
+const CANVAS_MODES = ['desktop', 'mobile'];
+const DOCUMENT_STORAGE_KEY = 'hipsend-email-editor-document';
+
+function loadInitialDocument() {
+  if (typeof window === 'undefined') {
+    return createInitialDocument();
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(DOCUMENT_STORAGE_KEY);
+    if (!storedValue) {
+      return createInitialDocument();
+    }
+
+    return parseEditorDocument(JSON.parse(storedValue));
+  } catch {
+    return createInitialDocument();
+  }
+}
 
 function getInsertionIntent(blocks, selectedBlockId) {
   if (!selectedBlockId) {
@@ -73,11 +100,13 @@ function resolveValidInsertion(blocks, blockType, intent) {
 }
 
 export default function App() {
-  const [documentState, setDocumentState] = useState(createInitialDocument);
+  const [documentState, setDocumentState] = useState(loadInitialDocument);
   const [selectedBlockId, setSelectedBlockId] = useState('');
   const [activeDrag, setActiveDrag] = useState(null);
   const [dropIndicator, setDropIndicator] = useState(null);
-  const [canvasMode, setCanvasMode] = useState('design');
+  const [canvasMode, setCanvasMode] = useState('desktop');
+  const [copiedPane, setCopiedPane] = useState('');
+  const [hostSession, setHostSession] = useState(createHostSession);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -87,7 +116,17 @@ export default function App() {
 
   const selected = selectedBlockId ? findBlock(documentState, selectedBlockId) : null;
   const selectedBlock = selected?.block || null;
-  const isDesignMode = canvasMode === 'design';
+  const parentLocated = selected?.containerId && selected.containerId !== ROOT_CONTAINER_ID
+    ? findBlock(documentState, selected.containerId)
+    : null;
+  const selectedParent = parentLocated?.block?.type === 'column' && parentLocated?.containerId && parentLocated.containerId !== ROOT_CONTAINER_ID
+    ? findBlock(documentState, parentLocated.containerId)?.block || null
+    : parentLocated?.block || null;
+  const selectedParentId = selectedParent?.id || '';
+  const selectedParentLabel = selectedParent ? BLOCK_DEFINITIONS[selectedParent.type]?.label || selectedParent.type : '';
+  const documentPayload = useMemo(() => serializeEditorDocument(documentState), [documentState]);
+  const debugJson = useMemo(() => JSON.stringify(documentPayload, null, 2), [documentPayload]);
+  const debugHtml = useMemo(() => exportDocumentToHtml(documentState), [documentState]);
 
   function commit(updater) {
     setDocumentState((previous) => updater(cloneDocument(previous)));
@@ -96,6 +135,30 @@ export default function App() {
   function handleReset() {
     setDocumentState(createInitialDocument());
     setSelectedBlockId('');
+  }
+
+  function handleSaveToHost() {
+    const didPost = postEditorSave({
+      document: documentPayload,
+      html: exportDocumentToHtml(documentState),
+      mode: canvasMode,
+      session: hostSession,
+    });
+
+    if (!didPost) {
+      return;
+    }
+
+    window.close();
+  }
+
+  function handleCopyDebug(pane, value) {
+    if (!navigator.clipboard) {
+      return;
+    }
+
+    navigator.clipboard.writeText(value);
+    setCopiedPane(pane);
   }
 
   function handleInsertBlock(type) {
@@ -132,10 +195,6 @@ export default function App() {
   }
 
   function handleDragStart(event) {
-    if (!isDesignMode) {
-      return;
-    }
-
     const dragData = event.active.data.current;
     if (!dragData) {
       return;
@@ -224,10 +283,6 @@ export default function App() {
   }
 
   function handleDragOver(event) {
-    if (!isDesignMode) {
-      return;
-    }
-
     const intent = resolveDropIntent(event);
     if (!intent || intent.source === 'drop-zone') {
       setDropIndicator(null);
@@ -241,12 +296,6 @@ export default function App() {
   }
 
   function handleDragEnd(event) {
-    if (!isDesignMode) {
-      setActiveDrag(null);
-      setDropIndicator(null);
-      return;
-    }
-
     const dragData = event.active.data.current;
     const dropData = resolveDropIntent(event) || getDropTargetFromOver(event.over);
     setActiveDrag(null);
@@ -300,7 +349,7 @@ export default function App() {
   useEffect(() => {
     function handleKeyDown(event) {
       const isDeleteKey = event.key === 'Delete' || event.key === 'Backspace';
-      if (!isDesignMode || !selectedBlockId || !isDeleteKey) {
+      if (!selectedBlockId || !isDeleteKey) {
         return;
       }
 
@@ -323,7 +372,57 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDesignMode, selectedBlockId]);
+  }, [selectedBlockId]);
+
+  useEffect(() => {
+    window.localStorage.setItem(DOCUMENT_STORAGE_KEY, JSON.stringify(documentPayload));
+  }, [documentPayload]);
+
+  useEffect(() => {
+    if (!hasHostOpener()) {
+      return undefined;
+    }
+
+    postEditorReady();
+
+    function handleMessage(event) {
+      const payload = getInitMessagePayload(event);
+      if (!payload) {
+        return;
+      }
+
+      const nextDocument = parseEditorDocument(payload.document);
+
+      setDocumentState(nextDocument);
+      setSelectedBlockId('');
+
+      if (payload.mode === 'desktop' || payload.mode === 'mobile') {
+        setCanvasMode(payload.mode);
+      }
+
+      setHostSession({
+        origin: event.origin,
+        context: payload.context ?? null,
+        requestId: typeof payload.requestId === 'string' ? payload.requestId : '',
+        source: typeof payload.source === 'string' ? payload.source : '',
+      });
+    }
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  useEffect(() => {
+    if (!copiedPane) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCopiedPane('');
+    }, 1600);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [copiedPane]);
 
   return (
     <section className="editor-shell">
@@ -343,6 +442,12 @@ export default function App() {
               </button>
             ))}
           </div>
+          {hostSession.origin ? (
+            <button type="button" className="editor-shell__button editor-shell__button--active" onClick={handleSaveToHost}>
+              <EditorIcon name="check" className="panel__button-icon" />
+              <span>Save</span>
+            </button>
+          ) : null}
           <button type="button" className="editor-shell__button" onClick={handleReset}>
             <EditorIcon name="reset" className="panel__button-icon" />
             <span>Reset</span>
@@ -359,40 +464,60 @@ export default function App() {
         onDragCancel={handleDragCancel}
       >
         <main className="editor-shell__workspace">
-          <div className={`editor-shell__panel-slot${isDesignMode ? '' : ' editor-shell__panel-slot--hidden'}`}>
-            <EditorBlockLibrary
-              blocks={INSERTABLE_BLOCKS}
-              onInsertBlock={handleInsertBlock}
-            />
-          </div>
+          <EditorBlockLibrary
+            blocks={INSERTABLE_BLOCKS}
+            onInsertBlock={handleInsertBlock}
+          />
 
           <EditorCanvas
             blocks={documentState}
             selectedBlockId={selectedBlockId}
+            selectedParentId={selectedParentId}
+            selectedParentLabel={selectedParentLabel}
             onSelectBlock={handleSelectBlock}
             onPatchBlock={handlePatchBlock}
             mode={canvasMode}
-            showDropZones={isDesignMode && Boolean(activeDrag)}
+            showDropZones={Boolean(activeDrag)}
             dropIndicator={dropIndicator}
           />
 
-          <div className={`editor-shell__panel-slot${isDesignMode ? '' : ' editor-shell__panel-slot--hidden'}`}>
-            <EditorInspector
-              block={selectedBlock}
-              definition={selectedBlock ? BLOCK_DEFINITIONS[selectedBlock.type] : null}
-              onChange={handleUpdateSelectedBlock}
-              onDelete={handleDeleteSelected}
-            />
-          </div>
+          <EditorInspector
+            block={selectedBlock}
+            definition={selectedBlock ? BLOCK_DEFINITIONS[selectedBlock.type] : null}
+            onChange={handleUpdateSelectedBlock}
+            onDelete={handleDeleteSelected}
+          />
         </main>
 
+        <section className="editor-shell__debug">
+          <div className="panel editor-shell__debug-panel">
+            <div className="editor-shell__debug-header">
+              <span>JSON</span>
+              <button type="button" className="editor-shell__debug-copy" onClick={() => handleCopyDebug('json', debugJson)}>
+                <EditorIcon name={copiedPane === 'json' ? 'check' : 'copy'} className="panel__button-icon" size={16} />
+              </button>
+            </div>
+            <pre className="editor-shell__debug-code">{debugJson}</pre>
+          </div>
+
+          <div className="panel editor-shell__debug-panel">
+            <div className="editor-shell__debug-header">
+              <span>HTML</span>
+              <button type="button" className="editor-shell__debug-copy" onClick={() => handleCopyDebug('html', debugHtml)}>
+                <EditorIcon name={copiedPane === 'html' ? 'check' : 'copy'} className="panel__button-icon" size={16} />
+              </button>
+            </div>
+            <pre className="editor-shell__debug-code">{debugHtml}</pre>
+          </div>
+        </section>
+
         <DragOverlay>
-          {isDesignMode && activeDrag?.kind === 'library' ? (
+          {activeDrag?.kind === 'library' ? (
             <div className="editor-shell__drag-chip">
               <span>{getBlockDefinition(activeDrag.block.type)?.label || activeDrag.block.type}</span>
             </div>
           ) : null}
-          {isDesignMode && activeDrag?.kind === 'block' ? (
+          {activeDrag?.kind === 'block' ? (
             <BlockDragPreview
               block={activeDrag.block}
               preview="desktop"

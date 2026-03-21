@@ -10,7 +10,7 @@ function ChildDropContainer({ block, blocks, isDesignMode, label, renderBlockLis
   const showInnerDropArea = isDesignMode && !blocks.length;
 
   return (
-    <div className="block-canvas__child-container">
+    <div className={`block-canvas__child-container${showInnerDropArea ? ' block-canvas__child-container--empty' : ''}`}>
       {blocks.length ? renderBlockList(blocks, block.id, { gap }) : null}
       {showInnerDropArea ? (
         <BlockDropZone
@@ -53,7 +53,7 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
       <EditableText
         value={blockProps.content}
         className={`block-canvas__editable block-canvas__editable--heading ${getPropClassNames(blockProps, ['textAlign', 'fontSize', 'fontWeight'])}`.trim()}
-        style={{ ...commonStyle, color: blockProps.color }}
+        style={{ ...commonStyle, color: blockProps.color, fontFamily: blockProps.fontFamily }}
         onFocus={isDesignMode ? () => onSelectBlock(block.id) : undefined}
         onChange={isDesignMode ? (content) => onPatchBlock(block.id, { content }) : undefined}
       />
@@ -65,7 +65,7 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
       <EditableText
         value={blockProps.content}
         className={`block-canvas__editable ${getPropClassNames(blockProps, ['textAlign', 'fontSize', 'lineHeight'])}`.trim()}
-        style={{ ...commonStyle, color: blockProps.color }}
+        style={{ ...commonStyle, color: blockProps.color, fontFamily: blockProps.fontFamily }}
         onFocus={isDesignMode ? () => onSelectBlock(block.id) : undefined}
         onChange={isDesignMode ? (content) => onPatchBlock(block.id, { content }) : undefined}
       />
@@ -95,6 +95,7 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
             className="block-canvas__editable block-canvas__editable--button"
             style={{
               color: blockProps.color,
+              fontFamily: blockProps.fontFamily,
               width: isFullWidth ? '100%' : 'auto',
               textAlign: 'center',
             }}
@@ -116,7 +117,11 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
               width: isFullWidth ? '100%' : undefined,
               backgroundColor: blockProps.backgroundColor,
               color: blockProps.color,
-              padding: `${tokens.paddingBlock} ${tokens.paddingInline}`,
+              fontFamily: blockProps.fontFamily,
+              paddingTop: tokens.paddingTop,
+              paddingBottom: tokens.paddingBottom,
+              paddingLeft: tokens.paddingLeft,
+              paddingRight: tokens.paddingRight,
               borderRadius: tokens.borderRadius,
             }}
           >
@@ -126,13 +131,15 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
           <a
             className="block-canvas__button-box"
             href={blockProps.href || '#'}
-            target={blockProps.target || '_self'}
-            rel={blockProps.target === '_blank' ? 'noopener noreferrer' : undefined}
             style={{
               width: isFullWidth ? '100%' : undefined,
               backgroundColor: blockProps.backgroundColor,
               color: blockProps.color,
-              padding: `${tokens.paddingBlock} ${tokens.paddingInline}`,
+              fontFamily: blockProps.fontFamily,
+              paddingTop: tokens.paddingTop,
+              paddingBottom: tokens.paddingBottom,
+              paddingLeft: tokens.paddingLeft,
+              paddingRight: tokens.paddingRight,
               borderRadius: tokens.borderRadius,
             }}
           >
@@ -146,7 +153,7 @@ export function BlockRenderer({ block, preview, isDesignMode, onPatchBlock, onSe
   if (block.type === 'spacer') {
     return (
       <div
-        className={isDesignMode ? 'block-canvas__spacer block-canvas__spacer--design' : 'block-canvas__spacer'}
+        className="block-canvas__spacer"
         style={{ height: tokens.height, marginTop: 0, marginBottom: 0 }}
       />
     );

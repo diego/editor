@@ -79,12 +79,27 @@ test('dragging into an empty group inserts inside the inner drop area', async ({
   await expect(groupBlock.getByTestId('block-container-text')).toHaveCount(1);
 });
 
-test('desktop preview renders block output without editor containers', async ({ page }) => {
+test('container blocks remain selectable after their children are populated', async ({ page }) => {
+  await page.getByTestId('library-block-columns').click();
+
+  await dragBetween(page, page.getByTestId('library-block-text'), page.locator('[data-testid^="drop-zone-inner-"]').first());
+  await dragBetween(page, page.getByTestId('library-block-button'), page.locator('[data-testid^="drop-zone-inner-"]').first());
+  await page.getByTestId('selected-parent-button').click();
+
+  await expect(page.locator('.panel__inspector-summary h3')).toHaveText('2 Columns');
+});
+
+test('desktop and mobile modes keep the canvas editable', async ({ page }) => {
   await page.getByTestId('library-block-group').click();
   await page.getByTestId('library-block-text').click();
-  await page.getByRole('button', { name: 'Desktop' }).click();
 
   const canvas = page.getByTestId('editor-canvas');
-  await expect(canvas.locator('[data-testid^="block-container-"]')).toHaveCount(0);
+  await expect(canvas.locator('[data-testid^="block-container-"]')).toHaveCount(2);
+
+  await page.getByRole('button', { name: 'Desktop' }).click();
+  await expect(canvas.locator('[data-testid^="block-container-"]')).toHaveCount(2);
+
+  await page.getByRole('button', { name: 'Mobile' }).click();
+  await expect(canvas.locator('[data-testid^="block-container-"]')).toHaveCount(2);
   await expect(canvas.getByText('Write your email copy here.')).toBeVisible();
 });

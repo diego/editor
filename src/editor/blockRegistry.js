@@ -8,18 +8,24 @@ const BUTTON_JUSTIFY_OPTIONS = [
   { value: 'center', label: 'center' },
   { value: 'flex-end', label: 'right' },
 ];
-const TARGET_OPTIONS = [
-  { value: '_self', label: 'Same tab' },
-  { value: '_blank', label: 'New tab' },
-];
 const STACK_OPTIONS = ['yes', 'no'];
 const SIZE_OPTIONS = ['none', 'xs', 'sm', 'md', 'lg', 'xl'];
+const TYPOGRAPHY_SIZE_OPTIONS = ['xs', 'sm', 'md', 'lg', 'xl'];
+const FONT_FAMILY_OPTIONS = [
+  { value: 'Arial, Helvetica, sans-serif', label: 'Arial' },
+  { value: 'Verdana, Geneva, sans-serif', label: 'Verdana' },
+  { value: '"Trebuchet MS", Helvetica, sans-serif', label: 'Trebuchet MS' },
+  { value: 'Tahoma, Geneva, sans-serif', label: 'Tahoma' },
+  { value: 'Georgia, "Times New Roman", serif', label: 'Georgia' },
+  { value: '"Times New Roman", Times, serif', label: 'Times New Roman' },
+  { value: '"Courier New", Courier, monospace', label: 'Courier New' },
+];
 
-function sizeControl(label) {
+function sizeControl(label, options = SIZE_OPTIONS) {
   return {
     type: 'select',
     label,
-    options: SIZE_OPTIONS,
+    options,
   };
 }
 
@@ -79,12 +85,14 @@ export const BLOCK_DEFINITIONS = {
         defaultProps: {
           textAlign: 'left',
           color: '#201c1b',
+          fontFamily: 'Arial, Helvetica, sans-serif',
           fontSize: 'xl',
           fontWeight: 'bold',
         },
         controls: [
           { name: 'textAlign', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
-          { name: 'fontSize', ...sizeControl('Font size') },
+          { name: 'fontFamily', type: 'select', label: 'Font family', options: FONT_FAMILY_OPTIONS },
+          { name: 'fontSize', ...sizeControl('Font size', TYPOGRAPHY_SIZE_OPTIONS) },
           { name: 'fontWeight', type: 'select', label: 'Weight', options: WEIGHT_OPTIONS },
           { name: 'color', type: 'color', label: 'Color' },
           { name: 'marginTop', ...sizeControl('Top spacing') },
@@ -110,13 +118,15 @@ export const BLOCK_DEFINITIONS = {
         defaultProps: {
           textAlign: 'left',
           color: '#4f4a47',
+          fontFamily: 'Arial, Helvetica, sans-serif',
           fontSize: 'md',
           lineHeight: 'md',
         },
         controls: [
           { name: 'textAlign', type: 'segmented', label: 'Alignment', options: ALIGN_OPTIONS },
-          { name: 'fontSize', ...sizeControl('Font size') },
-          { name: 'lineHeight', ...sizeControl('Line height') },
+          { name: 'fontFamily', type: 'select', label: 'Font family', options: FONT_FAMILY_OPTIONS },
+          { name: 'fontSize', ...sizeControl('Font size', TYPOGRAPHY_SIZE_OPTIONS) },
+          { name: 'lineHeight', ...sizeControl('Line height', TYPOGRAPHY_SIZE_OPTIONS) },
           { name: 'color', type: 'color', label: 'Color' },
           { name: 'marginTop', ...sizeControl('Top spacing') },
           { name: 'marginBottom', ...sizeControl('Bottom spacing') },
@@ -164,7 +174,6 @@ export const BLOCK_DEFINITIONS = {
         defaultProps: {
           label: 'Call to action',
           href: 'https://example.com',
-          target: '_blank',
         },
         controls: [
           { name: 'label', type: 'text', label: 'Label' },
@@ -177,25 +186,26 @@ export const BLOCK_DEFINITIONS = {
           width: 'auto',
           backgroundColor: '#201c1b',
           color: '#fffaf5',
-          paddingInline: 'lg',
-          paddingBlock: 'sm',
+          fontFamily: 'Arial, Helvetica, sans-serif',
+          paddingTop: 'sm',
+          paddingBottom: 'sm',
+          paddingLeft: 'lg',
+          paddingRight: 'lg',
           borderRadius: 'md',
         },
         controls: [
           { name: 'justifyContent', type: 'segmented', label: 'Alignment', options: BUTTON_JUSTIFY_OPTIONS },
           { name: 'width', type: 'select', label: 'Width', options: BUTTON_WIDTH_OPTIONS },
+          { name: 'fontFamily', type: 'select', label: 'Font family', options: FONT_FAMILY_OPTIONS },
           { name: 'backgroundColor', type: 'color', label: 'Background color' },
           { name: 'color', type: 'color', label: 'Text color' },
-          { name: 'paddingInline', ...sizeControl('Horizontal padding') },
-          { name: 'paddingBlock', ...sizeControl('Vertical padding') },
+          { name: 'paddingTop', ...sizeControl('Top padding') },
+          { name: 'paddingBottom', ...sizeControl('Bottom padding') },
+          { name: 'paddingLeft', ...sizeControl('Left padding') },
+          { name: 'paddingRight', ...sizeControl('Right padding') },
           { name: 'borderRadius', ...sizeControl('Corner radius') },
           { name: 'marginTop', ...sizeControl('Top spacing') },
           { name: 'marginBottom', ...sizeControl('Bottom spacing') },
-        ],
-      },
-      behavior: {
-        controls: [
-          { name: 'target', type: 'select', label: 'Open link in', options: TARGET_OPTIONS },
         ],
       },
     },

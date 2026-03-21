@@ -73,7 +73,12 @@ function InspectorField({ control, value, onChange }) {
   );
 }
 
-export function EditorInspector({ block, definition, onChange, onDelete }) {
+export function EditorInspector({
+  block,
+  definition,
+  onChange,
+  onDelete,
+}) {
   const controlGroups = definition?.controlGroups?.filter((group) => group.controls.length) || [];
 
   return (

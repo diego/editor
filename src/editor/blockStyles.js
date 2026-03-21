@@ -19,9 +19,10 @@ export function getBlockStyleTokens(props = {}) {
     fontSize: FONT_SIZE_SCALE[props.fontSize] || FONT_SIZE_SCALE.md,
     lineHeight: LINE_HEIGHT_SCALE[props.lineHeight] || LINE_HEIGHT_SCALE.md,
     width: WIDTH_SCALE[props.width] || WIDTH_SCALE.full,
-    contentWidth: WIDTH_SCALE[props.contentWidth] || WIDTH_SCALE.full,
-    paddingInline: SPACE_SCALE[props.paddingInline] || SPACE_SCALE.md,
-    paddingBlock: SPACE_SCALE[props.paddingBlock] || SPACE_SCALE.sm,
+    paddingTop: SPACE_SCALE[props.paddingTop] || '0px',
+    paddingBottom: SPACE_SCALE[props.paddingBottom] || '0px',
+    paddingLeft: SPACE_SCALE[props.paddingLeft] || '0px',
+    paddingRight: SPACE_SCALE[props.paddingRight] || '0px',
     borderWidth: BORDER_SCALE[props.borderWidth] || BORDER_SCALE.xs,
   };
 }

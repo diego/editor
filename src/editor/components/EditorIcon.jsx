@@ -7,11 +7,12 @@ import dividerIcon from '../icons/divider.svg?raw';
 import groupIcon from '../icons/group.svg?raw';
 import columnsIcon from '../icons/columns.svg?raw';
 import columns3Icon from '../icons/columns3.svg?raw';
-import designIcon from '../icons/design.svg?raw';
 import desktopIcon from '../icons/desktop.svg?raw';
 import mobileIcon from '../icons/mobile.svg?raw';
 import resetIcon from '../icons/reset.svg?raw';
 import deleteIcon from '../icons/delete.svg?raw';
+import copyIcon from '../icons/copy.svg?raw';
+import checkIcon from '../icons/check.svg?raw';
 
 const ICONS = {
   heading: headingIcon,
@@ -23,11 +24,12 @@ const ICONS = {
   group: groupIcon,
   columns: columnsIcon,
   columns3: columns3Icon,
-  design: designIcon,
   desktop: desktopIcon,
   mobile: mobileIcon,
   reset: resetIcon,
   delete: deleteIcon,
+  copy: copyIcon,
+  check: checkIcon,
 };
 
 export function EditorIcon({ name, className = '', size = 18 }) {

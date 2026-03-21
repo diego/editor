@@ -1,15 +1,13 @@
-import { getBlockDefinition } from '../../blockRegistry';
-import { BlockContainer } from './BlockContainer';
+import { BlockNode } from './BlockNode';
 import { BlockRenderer } from './BlockRenderer';
 
 function StaticBlockList({ blocks, preview }) {
   return (
-    <div className="block-canvas__list block-canvas__list--design">
+    <div className="block-canvas__list">
       {blocks.map((block) => (
-        <BlockContainer
+        <BlockNode
           key={block.id}
           block={block}
-          definition={getBlockDefinition(block.type)}
           isSelected={false}
           isDragging={false}
           onSelectBlock={() => {}}
@@ -21,9 +19,8 @@ function StaticBlockList({ blocks, preview }) {
             onPatchBlock={() => {}}
             onSelectBlock={() => {}}
             renderBlockList={(childBlocks) => <StaticBlockList blocks={childBlocks} preview={preview} />}
-            showDropZones={false}
           />
-        </BlockContainer>
+        </BlockNode>
       ))}
     </div>
   );
@@ -32,9 +29,8 @@ function StaticBlockList({ blocks, preview }) {
 export function BlockDragPreview({ block, preview = 'desktop' }) {
   return (
     <div className="block-canvas__drag-preview">
-      <BlockContainer
+      <BlockNode
         block={block}
-        definition={getBlockDefinition(block.type)}
         isSelected={false}
         isDragging={false}
         onSelectBlock={() => {}}
@@ -46,9 +42,8 @@ export function BlockDragPreview({ block, preview = 'desktop' }) {
           onPatchBlock={() => {}}
           onSelectBlock={() => {}}
           renderBlockList={(childBlocks) => <StaticBlockList blocks={childBlocks} preview={preview} />}
-          showDropZones={false}
         />
-      </BlockContainer>
+      </BlockNode>
     </div>
   );
 }

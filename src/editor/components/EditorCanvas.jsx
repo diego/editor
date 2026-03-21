@@ -2,7 +2,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { getBlockDefinition } from '../blockRegistry';
 import { ROOT_CONTAINER_ID } from '../blockUtils';
-import { BlockContainer } from './canvas/BlockContainer';
+import { BlockNode } from './canvas/BlockNode';
 import { BlockRenderer } from './canvas/BlockRenderer';
 
 function BlockInsertionMarker() {
@@ -28,42 +28,23 @@ function ListEdgeTarget({ containerId, index, enabled, position }) {
   return <div ref={setNodeRef} className={`block-canvas__list-edge-target block-canvas__list-edge-target--${position}`} aria-hidden="true" />;
 }
 
-function PreviewBlock({
-  block,
-  selectedBlockId,
-  onSelectBlock,
-  onPatchBlock,
-  preview,
-  renderBlockList,
-}) {
-  return (
-    <BlockRenderer
-      block={block}
-      isDesignMode={false}
-      preview={preview}
-      onPatchBlock={onPatchBlock}
-      onSelectBlock={onSelectBlock}
-      renderBlockList={renderBlockList}
-    />
-  );
-}
-
 function DesignBlock({
   block,
   containerId,
   index,
   selectedBlockId,
+  selectedParentId,
+  selectedParentLabel,
   onSelectBlock,
   onPatchBlock,
   preview,
   isDesignMode,
   showDropZones,
-  listGap,
   setSlotRef,
   renderBlockList,
 }) {
   const definition = getBlockDefinition(block.type);
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: block.id,
     disabled: !isDesignMode || selectedBlockId !== block.id,
     data: {
@@ -89,23 +70,25 @@ function DesignBlock({
     <div
       ref={setSlotRef(block.id)}
       className="block-canvas__block-slot"
-      style={{ '--block-list-gap': listGap }}
+      style={{ '--block-hit-area-size': '24px' }}
     >
       <div
         ref={setHitAreaRef}
         className={`block-canvas__block-hit-area${showDropZones ? ' block-canvas__block-hit-area--active' : ''}`}
         aria-hidden="true"
       />
-      <BlockContainer
+      <BlockNode
         block={block}
-        definition={definition}
         isSelected={selectedBlockId === block.id}
         isDragging={isDragging}
         attributes={attributes}
         listeners={listeners}
         setNodeRef={setNodeRef}
-        style={transform ? { zIndex: 20 } : undefined}
+        style={isDragging ? { zIndex: 20 } : undefined}
         onSelectBlock={onSelectBlock}
+        selectedParentId={selectedBlockId === block.id ? selectedParentId : ''}
+        selectedParentLabel={selectedBlockId === block.id ? selectedParentLabel : ''}
+        selectedLabel={definition?.label || block.type}
       >
         <BlockRenderer
           block={block}
@@ -114,9 +97,8 @@ function DesignBlock({
           onPatchBlock={onPatchBlock}
           onSelectBlock={onSelectBlock}
           renderBlockList={renderBlockList}
-          showDropZones={showDropZones}
         />
-      </BlockContainer>
+      </BlockNode>
     </div>
   );
 }
@@ -125,6 +107,8 @@ function BlockList({
   blocks,
   containerId,
   selectedBlockId,
+  selectedParentId,
+  selectedParentLabel,
   onSelectBlock,
   onPatchBlock,
   preview,
@@ -136,8 +120,6 @@ function BlockList({
   const listRef = useRef(null);
   const slotRefs = useRef(new Map());
   const [markerTop, setMarkerTop] = useState(null);
-  const listGap = isDesignMode ? '18px' : (gap || '0px');
-  const gapPx = Number.parseInt(listGap, 10) || 0;
 
   function setSlotRef(blockId) {
     return (node) => {
@@ -154,6 +136,8 @@ function BlockList({
       blocks={childBlocks}
       containerId={childContainerId}
       selectedBlockId={selectedBlockId}
+      selectedParentId={selectedParentId}
+      selectedParentLabel={selectedParentLabel}
       onSelectBlock={onSelectBlock}
       onPatchBlock={onPatchBlock}
       preview={preview}
@@ -185,7 +169,7 @@ function BlockList({
       }
 
       const firstRect = firstSlot.getBoundingClientRect();
-      setMarkerTop((firstRect.top - listRect.top) - (gapPx / 2));
+      setMarkerTop(firstRect.top - listRect.top);
       return;
     }
 
@@ -197,7 +181,7 @@ function BlockList({
       }
 
       const lastRect = lastSlot.getBoundingClientRect();
-      setMarkerTop((lastRect.bottom - listRect.top) + (gapPx / 2));
+      setMarkerTop(lastRect.bottom - listRect.top);
       return;
     }
 
@@ -208,19 +192,14 @@ function BlockList({
     }
 
     const nextRect = nextSlot.getBoundingClientRect();
-    setMarkerTop((nextRect.top - listRect.top) - (gapPx / 2));
-  }, [blocks, containerId, dropIndicator, gapPx, isDesignMode]);
-
-  const listClassName = [
-    'block-canvas__list',
-    isDesignMode ? 'block-canvas__list--design' : 'block-canvas__list--preview',
-  ].filter(Boolean).join(' ');
+    setMarkerTop(nextRect.top - listRect.top);
+  }, [blocks, containerId, dropIndicator, isDesignMode]);
 
   return (
     <div
       ref={listRef}
-      className={listClassName}
-      style={{ '--block-list-gap': listGap }}
+      className="block-canvas__list"
+      style={{ gap: gap || '0px' }}
     >
       {isDesignMode && markerTop !== null ? (
         <div className="block-canvas__list-marker" style={{ top: `${markerTop}px` }}>
@@ -229,45 +208,34 @@ function BlockList({
       ) : null}
       {isDesignMode ? <ListEdgeTarget containerId={containerId} index={0} enabled={showDropZones} position="top" /> : null}
       {blocks.map((block, index) => (
-        isDesignMode ? (
-          <DesignBlock
-            key={block.id}
-            block={block}
-            containerId={containerId}
-            index={index}
-            selectedBlockId={selectedBlockId}
-            onSelectBlock={onSelectBlock}
-            onPatchBlock={onPatchBlock}
-            preview={preview}
-            isDesignMode={isDesignMode}
-            showDropZones={showDropZones}
-            listGap={listGap}
-            setSlotRef={setSlotRef}
-            renderBlockList={renderNestedBlockList}
-          />
-        ) : (
-          <PreviewBlock
-            key={block.id}
-            block={block}
-            selectedBlockId={selectedBlockId}
-            onSelectBlock={onSelectBlock}
-            onPatchBlock={onPatchBlock}
-            preview={preview}
-            renderBlockList={renderNestedBlockList}
-          />
-        )
+        <DesignBlock
+          key={block.id}
+          block={block}
+          containerId={containerId}
+          index={index}
+          selectedBlockId={selectedBlockId}
+          selectedParentId={selectedParentId}
+          selectedParentLabel={selectedParentLabel}
+          onSelectBlock={onSelectBlock}
+          onPatchBlock={onPatchBlock}
+          preview={preview}
+          isDesignMode={isDesignMode}
+          showDropZones={showDropZones}
+          setSlotRef={setSlotRef}
+          renderBlockList={renderNestedBlockList}
+        />
       ))}
       {isDesignMode ? <ListEdgeTarget containerId={containerId} index={blocks.length} enabled={showDropZones} position="bottom" /> : null}
     </div>
   );
 }
 
-export function EditorCanvas({ blocks, selectedBlockId, onSelectBlock, onPatchBlock, mode, showDropZones = false, dropIndicator = null }) {
-  const isDesignMode = mode === 'design';
+export function EditorCanvas({ blocks, selectedBlockId, selectedParentId = '', selectedParentLabel = '', onSelectBlock, onPatchBlock, mode, showDropZones = false, dropIndicator = null }) {
+  const isDesignMode = true;
   const preview = mode === 'mobile' ? 'mobile' : 'desktop';
   const { setNodeRef, isOver } = useDroppable({
     id: 'canvas-root',
-    disabled: !isDesignMode || blocks.length > 0,
+    disabled: blocks.length > 0,
     data: {
       kind: 'container',
       containerId: ROOT_CONTAINER_ID,
@@ -278,16 +246,18 @@ export function EditorCanvas({ blocks, selectedBlockId, onSelectBlock, onPatchBl
 
   return (
     <section
-      ref={isDesignMode ? setNodeRef : undefined}
-      className={`panel panel--canvas block-canvas__root${isDesignMode && isOver ? ' block-canvas__root--over' : ''}${preview === 'mobile' ? ' block-canvas__root--mobile' : ' block-canvas__root--desktop'}${isDesignMode ? '' : ' block-canvas__root--preview'}`}
+      ref={setNodeRef}
+      className={`panel panel--canvas block-canvas__root${isOver ? ' block-canvas__root--over' : ''}${preview === 'mobile' ? ' block-canvas__root--mobile' : ' block-canvas__root--desktop'}`}
       data-testid="editor-canvas"
-      onClick={isDesignMode ? () => onSelectBlock('') : undefined}
+      onClick={() => onSelectBlock('')}
     >
       {blocks.length ? (
         <BlockList
           blocks={blocks}
           containerId={ROOT_CONTAINER_ID}
           selectedBlockId={selectedBlockId}
+          selectedParentId={selectedParentId}
+          selectedParentLabel={selectedParentLabel}
           onSelectBlock={onSelectBlock}
           onPatchBlock={onPatchBlock}
           preview={preview}
@@ -297,7 +267,7 @@ export function EditorCanvas({ blocks, selectedBlockId, onSelectBlock, onPatchBl
         />
       ) : (
         <div className="panel__empty-state">
-          <p>{isDesignMode ? 'Start from an empty canvas. Add a block from the left or drop one here.' : 'No content yet.'}</p>
+          <p>Start from an empty canvas. Add a block from the left or drop one here.</p>
         </div>
       )}
     </section>
