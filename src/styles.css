@@ -40,6 +40,33 @@ button {
   flex-direction: column;
 }
 
+.editor-layout--mobile-only {
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(95, 78, 64, 0.12) 1px, transparent 0),
+    #fbfaf8;
+  background-size: 14px 14px;
+}
+
+.editor-layout__mobile-content {
+  width: min(520px, 100%);
+}
+
+.editor-layout__mobile-message {
+  padding: 40px 32px;
+  border: 1px solid rgba(95, 78, 64, 0.14);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.94);
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(32, 28, 27, 0.08);
+}
+
+.editor-layout__mobile-message p {
+  margin: 12px 0 0;
+  color: #5f4e40;
+}
+
 .editor-layout__header {
   display: flex;
   align-items: flex-start;

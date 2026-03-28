@@ -99,6 +99,14 @@ function resolveValidInsertion(blocks, blockType, intent) {
   };
 }
 
+function getIsMobileDevice() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+
+  return window.matchMedia('(max-width: 900px) and ((pointer: coarse) or (hover: none))').matches;
+}
+
 export default function App() {
   const [documentState, setDocumentState] = useState(loadInitialDocument);
   const [selectedBlockId, setSelectedBlockId] = useState('');
@@ -107,6 +115,7 @@ export default function App() {
   const [canvasMode, setCanvasMode] = useState('desktop');
   const [copiedPane, setCopiedPane] = useState('');
   const [hostSession, setHostSession] = useState(createHostSession);
+  const [isMobileDevice, setIsMobileDevice] = useState(getIsMobileDevice);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -423,6 +432,36 @@ export default function App() {
 
     return () => window.clearTimeout(timeoutId);
   }, [copiedPane]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 900px) and ((pointer: coarse) or (hover: none))');
+    const handleChange = () => setIsMobileDevice(mediaQuery.matches);
+
+    handleChange();
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  if (isMobileDevice) {
+    return (
+      <section className="editor-layout editor-layout--mobile-only">
+        <div className="editor-layout__mobile-content">
+          <div className="editor-layout__mobile-message">
+            <h1 className="editor-layout__title">Email Editor</h1>
+            <p>This editor is currently available on desktop only.</p>
+            <p>Please reopen it on a desktop computer to continue designing your email.</p>
+          </div>
+          <footer className="editor-layout__footer">
+            <a href="mailto:info@hipsend.com">info@hipsend.com</a>
+          </footer>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="editor-layout">
