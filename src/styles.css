@@ -33,14 +33,14 @@ button {
   min-height: 100vh;
 }
 
-.editor-shell {
+.editor-layout {
   min-height: 100vh;
   padding: 24px;
   display: flex;
   flex-direction: column;
 }
 
-.editor-shell__header {
+.editor-layout__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -48,7 +48,7 @@ button {
   margin-bottom: 20px;
 }
 
-.editor-shell__title,
+.editor-layout__title,
 .panel__library-group h3,
 .panel__inspector h3 {
   margin: 0;
@@ -64,18 +64,18 @@ button {
   color: #7f756c;
 }
 
-.editor-shell__actions {
+.editor-layout__actions {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.editor-shell__mode-switch {
+.editor-layout__mode-switch {
   display: inline-flex;
   gap: 8px;
 }
 
-.editor-shell__workspace {
+.editor-layout__workspace {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr) 320px;
   gap: 18px;
@@ -84,19 +84,34 @@ button {
   min-height: 0;
 }
 
-.editor-shell__debug {
+.editor-layout__debug {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   margin-top: 18px;
 }
 
-.editor-shell__debug-panel {
+.editor-layout__footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.editor-layout__footer a {
+  color: #201c1b;
+  text-decoration: none;
+}
+
+.editor-layout__footer a:hover {
+  text-decoration: underline;
+}
+
+.editor-layout__debug-panel {
   min-width: 0;
   overflow: hidden;
 }
 
-.editor-shell__debug-header {
+.editor-layout__debug-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -110,7 +125,7 @@ button {
   color: #7f756c;
 }
 
-.editor-shell__debug-copy {
+.editor-layout__debug-copy {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -123,7 +138,7 @@ button {
   color: #201c1b;
 }
 
-.editor-shell__debug-code {
+.editor-layout__debug-code {
   margin: 0;
   padding: 16px;
   min-height: 280px;
@@ -205,7 +220,7 @@ button {
   height: 100%;
 }
 
-.editor-shell__button,
+.editor-layout__button,
 .panel__button,
 .panel__segmented-control-button {
   border: 1px solid rgba(95, 78, 64, 0.16);
@@ -214,7 +229,7 @@ button {
   color: #201c1b;
 }
 
-.editor-shell__button,
+.editor-layout__button,
 .panel__button {
   padding: 10px 12px;
   display: inline-flex;
@@ -222,7 +237,7 @@ button {
   gap: 8px;
 }
 
-.editor-shell__button--active,
+.editor-layout__button--active,
 .panel__segmented-control-button--active {
   background: #201c1b;
   color: #ffffff;
@@ -750,7 +765,7 @@ button {
   box-shadow: 0 10px 24px rgba(32, 28, 27, 0.14);
 }
 
-.editor-shell__drag-chip {
+.editor-layout__drag-chip {
   padding: 10px 14px;
   border: 1px solid rgba(95, 78, 64, 0.18);
   border-radius: 3px;
@@ -760,11 +775,11 @@ button {
 }
 
 @media (max-width: 1100px) {
-  .editor-shell__workspace {
+  .editor-layout__workspace {
     grid-template-columns: 1fr;
   }
 
-  .editor-shell__debug {
+  .editor-layout__debug {
     grid-template-columns: 1fr;
   }
 
@@ -775,15 +790,15 @@ button {
 }
 
 @media (max-width: 720px) {
-  .editor-shell {
+  .editor-layout {
     padding: 16px;
   }
 
-  .editor-shell__header {
+  .editor-layout__header {
     flex-direction: column;
   }
 
-  .editor-shell__actions {
+  .editor-layout__actions {
     flex-wrap: wrap;
   }
 

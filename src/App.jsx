@@ -425,16 +425,16 @@ export default function App() {
   }, [copiedPane]);
 
   return (
-    <section className="editor-shell">
-      <header className="editor-shell__header">
-        <h1 className="editor-shell__title">Editor</h1>
-        <div className="editor-shell__actions">
-          <div className="editor-shell__mode-switch">
+    <section className="editor-layout">
+      <header className="editor-layout__header">
+        <h1 className="editor-layout__title">Email Editor</h1>
+        <div className="editor-layout__actions">
+          <div className="editor-layout__mode-switch">
             {CANVAS_MODES.map((mode) => (
               <button
                 key={mode}
                 type="button"
-                className={canvasMode === mode ? 'editor-shell__button editor-shell__button--active' : 'editor-shell__button'}
+                className={canvasMode === mode ? 'editor-layout__button editor-layout__button--active' : 'editor-layout__button'}
                 onClick={() => setCanvasMode(mode)}
               >
                 <EditorIcon name={mode} className="panel__button-icon" />
@@ -443,12 +443,12 @@ export default function App() {
             ))}
           </div>
           {hostSession.origin ? (
-            <button type="button" className="editor-shell__button editor-shell__button--active" onClick={handleSaveToHost}>
+            <button type="button" className="editor-layout__button editor-layout__button--active" onClick={handleSaveToHost}>
               <EditorIcon name="check" className="panel__button-icon" />
               <span>Save</span>
             </button>
           ) : null}
-          <button type="button" className="editor-shell__button" onClick={handleReset}>
+          <button type="button" className="editor-layout__button" onClick={handleReset}>
             <EditorIcon name="reset" className="panel__button-icon" />
             <span>Reset</span>
           </button>
@@ -463,7 +463,7 @@ export default function App() {
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <main className="editor-shell__workspace">
+        <main className="editor-layout__workspace">
           <EditorBlockLibrary
             blocks={INSERTABLE_BLOCKS}
             onInsertBlock={handleInsertBlock}
@@ -489,31 +489,31 @@ export default function App() {
           />
         </main>
 
-        <section className="editor-shell__debug">
-          <div className="panel editor-shell__debug-panel">
-            <div className="editor-shell__debug-header">
+        <section className="editor-layout__debug">
+          <div className="panel editor-layout__debug-panel">
+            <div className="editor-layout__debug-header">
               <span>JSON</span>
-              <button type="button" className="editor-shell__debug-copy" onClick={() => handleCopyDebug('json', debugJson)}>
+              <button type="button" className="editor-layout__debug-copy" onClick={() => handleCopyDebug('json', debugJson)}>
                 <EditorIcon name={copiedPane === 'json' ? 'check' : 'copy'} className="panel__button-icon" size={16} />
               </button>
             </div>
-            <pre className="editor-shell__debug-code">{debugJson}</pre>
+            <pre className="editor-layout__debug-code">{debugJson}</pre>
           </div>
 
-          <div className="panel editor-shell__debug-panel">
-            <div className="editor-shell__debug-header">
+          <div className="panel editor-layout__debug-panel">
+            <div className="editor-layout__debug-header">
               <span>HTML</span>
-              <button type="button" className="editor-shell__debug-copy" onClick={() => handleCopyDebug('html', debugHtml)}>
+              <button type="button" className="editor-layout__debug-copy" onClick={() => handleCopyDebug('html', debugHtml)}>
                 <EditorIcon name={copiedPane === 'html' ? 'check' : 'copy'} className="panel__button-icon" size={16} />
               </button>
             </div>
-            <pre className="editor-shell__debug-code">{debugHtml}</pre>
+            <pre className="editor-layout__debug-code">{debugHtml}</pre>
           </div>
         </section>
 
         <DragOverlay>
           {activeDrag?.kind === 'library' ? (
-            <div className="editor-shell__drag-chip">
+            <div className="editor-layout__drag-chip">
               <span>{getBlockDefinition(activeDrag.block.type)?.label || activeDrag.block.type}</span>
             </div>
           ) : null}
@@ -525,6 +525,10 @@ export default function App() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      <footer className="editor-layout__footer">
+        <a href="mailto:info@hipsend.com">info@hipsend.com</a>
+      </footer>
     </section>
   );
 }
